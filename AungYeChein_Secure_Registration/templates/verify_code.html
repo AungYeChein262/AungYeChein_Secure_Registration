@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>{{ title }}</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+</head>
+
+<body>
+    <main class="registration-container">
+        <section class="registration-card verification-card">
+            <div class="email-icon">✉</div>
+
+            <h1>{{ title }}</h1>
+
+            <p class="intro-text">
+                {{ description }}
+            </p>
+
+            <p>
+                The code expires after five minutes and can only
+                be used once.
+            </p>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                    <div class="message-box {{ category }}-box">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endwith %}
+
+            {% if errors %}
+                <div class="message-box error-box">
+                    <ul>
+                        {% for error in errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <form method="POST">
+                <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="{{ csrf_token() }}"
+                >
+
+                <div class="form-group">
+                    <label for="verification_code">
+                        Six-digit verification code
+                    </label>
+
+                    <input
+                        id="verification_code"
+                        name="verification_code"
+                        type="text"
+                        class="verification-input"
+                        minlength="6"
+                        maxlength="6"
+                        inputmode="numeric"
+                        pattern="[0-9]{6}"
+                        autocomplete="one-time-code"
+                        required
+                        autofocus
+                    >
+                </div>
+
+                <button
+                    type="submit"
+                    class="register-button"
+                >
+                    {{ button_text }}
+                </button>
+            </form>
+
+            <form
+                method="POST"
+                action="{{ url_for(resend_endpoint) }}"
+                class="resend-form"
+            >
+                <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="{{ csrf_token() }}"
+                >
+
+                <button
+                    type="submit"
+                    class="secondary-button"
+                >
+                    Send a New Code
+                </button>
+            </form>
+
+            <p class="account-link">
+                <a href="{{ url_for(back_endpoint) }}">
+                    Go back
+                </a>
+            </p>
+        </section>
+    </main>
+</body>
+</html>

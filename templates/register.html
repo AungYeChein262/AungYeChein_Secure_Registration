@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Secure Account Registration</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+</head>
+
+<body>
+    <main class="registration-container">
+        <section class="registration-card">
+            <header>
+                <p class="security-label">
+                    CET324 Advanced CyberSecurity
+                </p>
+
+                <h1>Create a Secure Account</h1>
+
+                <p class="intro-text">
+                    Register with a unique email address and username.
+                </p>
+            </header>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                    <div
+                        class="message-box {{ category }}-box"
+                        role="alert"
+                    >
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endwith %}
+
+            {% if errors %}
+                <div
+                    class="message-box error-box"
+                    role="alert"
+                    aria-live="assertive"
+                >
+                    <strong>Registration was not completed:</strong>
+
+                    <ul>
+                        {% for error in errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <form
+                id="registration-form"
+                method="POST"
+                novalidate
+            >
+                <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="{{ csrf_token() }}"
+                >
+
+                <!-- Email -->
+                <div class="form-group">
+                    <label for="email">
+                        Email address
+                    </label>
+
+                    <input
+                        id="email"
+                        name="email"
+                        type="email"
+                        value="{{ email }}"
+                        maxlength="254"
+                        autocomplete="email"
+                        required
+                    >
+
+                    <small>
+                        A verification code will be sent to this address.
+                    </small>
+                </div>
+
+                <!-- Username -->
+                <div class="form-group">
+                    <label for="username">
+                        Username
+                    </label>
+
+                    <input
+                        id="username"
+                        name="username"
+                        type="text"
+                        value="{{ username }}"
+                        minlength="4"
+                        maxlength="30"
+                        pattern="[A-Za-z0-9_]+"
+                        autocomplete="username"
+                        required
+                    >
+
+                    <small>
+                        Use 4–30 letters, numbers or underscores.
+                    </small>
+                </div>
+
+                <!-- Password -->
+                <div class="form-group">
+                    <label for="password">
+                        Password
+                    </label>
+
+                    <div class="password-input-row">
+                        <input
+                            id="password"
+                            name="password"
+                            type="password"
+                            minlength="12"
+                            maxlength="128"
+                            autocomplete="new-password"
+                            required
+                        >
+
+                        <button
+                            type="button"
+                            class="secondary-button password-show-button"
+                            id="toggle-password"
+                            aria-label="Show password"
+                        >
+                            Show
+                        </button>
+                    </div>
+
+                    <!-- Strength + expandable requirements icon -->
+                    <div class="strength-row">
+                        <div
+                            id="strength-display"
+                            class="strength-display"
+                            aria-live="polite"
+                        >
+                            Password strength: Not evaluated
+                        </div>
+
+                        <button
+                            type="button"
+                            id="rules-toggle"
+                            class="rules-toggle"
+                            aria-expanded="false"
+                            aria-controls="password-rules-panel"
+                            title="Show password requirements"
+                        >
+                            <span aria-hidden="true">i</span>
+
+                            <span class="visually-hidden">
+                                Show password requirements
+                            </span>
+                        </button>
+                    </div>
+
+                    <!-- Hidden password rules -->
+                    <div
+                        id="password-rules-panel"
+                        class="password-rules-panel"
+                        aria-hidden="true"
+                    >
+                        <div class="password-rules-inner">
+                            <div class="rules-panel-heading">
+                                Password requirements
+                            </div>
+
+                            <ul class="password-rules">
+                                <li id="rule-length">
+                                    Between 12 and 128 characters
+                                </li>
+
+                                <li id="rule-lowercase">
+                                    At least one lowercase letter
+                                </li>
+
+                                <li id="rule-uppercase">
+                                    At least one uppercase letter
+                                </li>
+
+                                <li id="rule-number">
+                                    At least one number
+                                </li>
+
+                                <li id="rule-special">
+                                    At least one special character
+                                </li>
+
+                                <li id="rule-common">
+                                    Must not be a commonly used password
+                                </li>
+
+                                <li id="rule-username">
+                                    Must not contain the username
+                                </li>
+
+                                <li id="rule-sequence">
+                                    Must not contain predictable sequences
+                                </li>
+
+                                <li id="rule-repetition">
+                                    Must not repeat one character four times
+                                </li>
+
+                                <li id="rule-spaces">
+                                    Must not start or end with a space
+                                </li>
+                            </ul>
+
+                            {% if password_result %}
+                                <div class="server-strength-result">
+                                    Server evaluation:
+
+                                    <strong>
+                                        {{ password_result["strength"] }}
+                                    </strong>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Password confirmation -->
+                <div class="form-group">
+                    <label for="confirm_password">
+                        Confirm password
+                    </label>
+
+                    <input
+                        id="confirm_password"
+                        name="confirm_password"
+                        type="password"
+                        minlength="12"
+                        maxlength="128"
+                        autocomplete="new-password"
+                        required
+                    >
+
+                    <small
+                        id="password-match-message"
+                        aria-live="polite"
+                    >
+                        Re-enter the same password.
+                    </small>
+                </div>
+
+                <!-- Human-verification checkbox -->
+                <div class="robot-widget">
+                    <label
+                        id="robot-check-row"
+                        class="robot-check-row"
+                        for="human_check"
+                    >
+                        <input
+                            id="human_check"
+                            name="human_check"
+                            type="checkbox"
+                            value="yes"
+                            class="robot-checkbox"
+                        >
+
+                        <span class="robot-copy">
+                            <span class="robot-text">
+                                I'm not a robot
+                            </span>
+
+                            <span
+                                id="robot-status"
+                                class="robot-status"
+                            >
+                                Click to begin verification
+                            </span>
+                        </span>
+
+                        <span class="robot-brand">
+                            <span
+                                id="robot-brand-icon"
+                                class="robot-brand-icon"
+                            >
+                                ✓
+                            </span>
+
+                            <span class="robot-brand-name">
+                                Secure CAPTCHA
+                            </span>
+
+                            <small>
+                                Privacy · Security
+                            </small>
+                        </span>
+                    </label>
+                </div>
+
+                <!-- CAPTCHA popup -->
+                <div
+                    id="captcha-modal"
+                    class="captcha-modal"
+                    aria-hidden="true"
+                    hidden
+                >
+                    <div
+                        id="captcha-backdrop"
+                        class="captcha-modal-backdrop"
+                    ></div>
+
+                    <section
+                        class="captcha-modal-dialog"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="captcha-modal-title"
+                        aria-describedby="captcha-modal-description"
+                    >
+                        <button
+                            type="button"
+                            id="close-captcha"
+                            class="captcha-modal-close"
+                            aria-label="Close CAPTCHA verification"
+                        >
+                            ×
+                        </button>
+
+                        <div class="captcha-popup-icon">
+                            ✓
+                        </div>
+
+                        <h2 id="captcha-modal-title">
+                            Human Verification
+                        </h2>
+
+                        <p
+                            id="captcha-modal-description"
+                            class="captcha-modal-description"
+                        >
+                            Enter the six characters shown in the image.
+                        </p>
+
+                        <div class="captcha-image-wrapper">
+                            <img
+                                id="captcha-image"
+                                data-captcha-url="{{ url_for('captcha_image') }}"
+                                alt="Security CAPTCHA containing six characters"
+                                width="260"
+                                height="90"
+                            >
+                        </div>
+
+                        <button
+                            type="button"
+                            class="captcha-refresh-button"
+                            id="refresh-captcha"
+                        >
+                            ↻ Generate a New CAPTCHA
+                        </button>
+
+                        <div class="captcha-input-group">
+                            <label for="captcha_answer">
+                                CAPTCHA answer
+                            </label>
+
+                            <input
+                                id="captcha_answer"
+                                name="captcha_answer"
+                                type="text"
+                                minlength="6"
+                                maxlength="6"
+                                autocomplete="off"
+                                spellcheck="false"
+                                placeholder="Enter six characters"
+                                disabled
+                            >
+
+                            <small>
+                                The CAPTCHA expires after three minutes and
+                                can only be used once.
+                            </small>
+                        </div>
+
+                        <div
+                            id="captcha-client-message"
+                            class="captcha-client-message"
+                            aria-live="polite"
+                        ></div>
+
+                        <div class="captcha-modal-actions">
+                            <button
+                                type="button"
+                                id="cancel-captcha"
+                                class="secondary-button captcha-cancel-button"
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                type="button"
+                                id="confirm-captcha"
+                                class="register-button captcha-confirm-button"
+                            >
+                                Confirm Challenge
+                            </button>
+                        </div>
+                    </section>
+                </div>
+
+                <button
+                    type="submit"
+                    class="register-button"
+                >
+                    Create Account
+                </button>
+            </form>
+
+            <p class="account-link">
+                Already registered?
+
+                <a href="{{ url_for('login') }}">
+                    Log in
+                </a>
+            </p>
+        </section>
+    </main>
+
+    <script
+        src="{{ url_for(
+            'static',
+            filename='js/registration.js'
+        ) }}"
+    ></script>
+</body>
+</html>

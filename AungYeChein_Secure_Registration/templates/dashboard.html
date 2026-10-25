@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="csrf-token"
+        content="{{ csrf_token() }}"
+    >
+
+    <title>Secure Dashboard</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/security_features.css') }}"
+    >
+
+    <script
+        src="{{ url_for('static', filename='js/session_timeout.js') }}"
+        defer
+    ></script>
+</head>
+
+<body>
+    <main class="dashboard-page">
+        <section
+            class="registration-card dashboard-card main-dashboard-card"
+        >
+            <div class="success-icon">
+                ✓
+            </div>
+
+            <p class="security-label">
+                Protected Area
+            </p>
+
+            <h1>
+                Secure Dashboard
+            </h1>
+
+            <p>
+                You successfully completed password authentication
+                and email-code verification.
+            </p>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                    <div
+                        class="message-box {{ category }}-box"
+                        role="alert"
+                    >
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endwith %}
+
+            <div class="account-details">
+                <p>
+                    <strong>Username:</strong>
+                    {{ user["username"] }}
+                </p>
+
+                <p>
+                    <strong>Email:</strong>
+                    {{ user["email"] }}
+                </p>
+
+                <p>
+                    <strong>Email verified:</strong>
+                    Yes
+                </p>
+
+                <p>
+                    <strong>Account created:</strong>
+                    {{ user["created_at"] }}
+                </p>
+
+                <p>
+                    <strong>Last successful login:</strong>
+                    {{ user["last_login_at"] or "Current login" }}
+                </p>
+            </div>
+
+            <section
+                id="password-change-security-card"
+                class="security-actions-card"
+                data-locked="{% if password_change_locked %}true{% else %}false{% endif %}"
+                data-remaining-seconds="{{ password_change_remaining_seconds }}"
+                data-change-password-url="{{ url_for('change_password') }}"
+                data-max-attempts="{{ password_change_max_attempts }}"
+            >
+                <div class="security-actions-heading">
+                    <div>
+                        <p class="security-label">
+                            Account Security
+                        </p>
+
+                        <h2>
+                            Security Controls
+                        </h2>
+                    </div>
+
+                    <div class="security-heading-status">
+                        <span
+                            id="password-change-countdown-badge"
+                            class="
+                                password-change-countdown-badge
+                                {% if not password_change_locked %}
+                                    is-hidden
+                                {% endif %}
+                            "
+                            aria-live="polite"
+                            aria-atomic="true"
+                        >
+                            00:00
+                        </span>
+
+                        <span
+                            class="security-actions-icon"
+                            aria-hidden="true"
+                        >
+                            🔐
+                        </span>
+                    </div>
+                </div>
+
+                <a
+                    id="change-password-button"
+                    data-change-password-url="{{ url_for('change_password') }}"
+                    {% if password_change_locked %}
+                        class="change-password-button is-disabled"
+                        aria-disabled="true"
+                        tabindex="-1"
+                    {% else %}
+                        href="{{ url_for('change_password') }}"
+                        class="change-password-button"
+                    {% endif %}
+                >
+                    {% if password_change_locked %}
+                        Password Change Temporarily Locked
+                    {% else %}
+                        Change Password Securely
+                    {% endif %}
+                </a>
+
+                <div class="password-change-attempt-summary">
+                    <span>
+                        Current-password attempts remaining
+                    </span>
+
+                    <strong id="password-change-attempts-remaining">
+                        {{ password_change_attempts_remaining }}
+                    </strong>
+                </div>
+            </section>
+
+            <form
+                method="POST"
+                action="{{ url_for('logout') }}"
+            >
+                <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="{{ csrf_token() }}"
+                >
+
+                <button
+                    type="submit"
+                    class="register-button"
+                >
+                    Secure Logout
+                </button>
+            </form>
+
+            <section class="danger-zone">
+                <div class="danger-zone-heading">
+                    <div>
+                        <h2>
+                            Danger Zone
+                        </h2>
+
+                        <p>
+                            Permanently delete your account, email,
+                            username and stored authentication data.
+                        </p>
+                    </div>
+
+                    <span
+                        class="danger-icon"
+                        aria-hidden="true"
+                    >
+                        !
+                    </span>
+                </div>
+
+                <a
+                    href="{{ url_for('delete_account') }}"
+                    class="delete-account-link"
+                >
+                    Delete Account
+                </a>
+            </section>
+        </section>
+
+        <div class="dashboard-right-column">
+            <aside class="registration-card accounts-panel">
+                <section class="directory-section">
+                    <div class="accounts-panel-header">
+                        <div>
+                            <p class="security-label">
+                                Privacy-Safe Directory
+                            </p>
+
+                            <h2>
+                                Active Users
+                            </h2>
+
+                            <p>
+                                {{ accounts|length }}
+                                verified
+                                account{% if accounts|length != 1 %}s{% endif %}
+                            </p>
+
+                            <small>
+                                Username and last-login time only
+                            </small>
+                        </div>
+
+                        <span
+                            class="accounts-icon"
+                            aria-hidden="true"
+                        >
+                            👥
+                        </span>
+                    </div>
+
+                    {% if accounts %}
+                        <div class="accounts-list">
+                            {% for account in accounts %}
+                                <article class="account-list-item">
+                                    <div class="account-avatar">
+                                        {{ account["username"][0]|upper }}
+                                    </div>
+
+                                    <div class="account-list-content">
+                                        <div class="account-list-heading">
+                                            <strong>
+                                                {{ account["username"] }}
+                                            </strong>
+
+                                            {% if account["user_id"] == user["user_id"] %}
+                                                <span class="current-account-badge">
+                                                    You
+                                                </span>
+                                            {% endif %}
+                                        </div>
+
+                                        <p class="account-last-login">
+                                            <strong>
+                                                Last login:
+                                            </strong>
+
+                                            {% if account["last_login_at"] %}
+                                                {{ account["last_login_at"][11:16] }}
+                                            {% else %}
+                                                Never logged in
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                </article>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-accounts-message">
+                            No verified accounts were found.
+                        </div>
+                    {% endif %}
+                </section>
+
+                <section class="security-activity-section">
+                    <div class="security-activity-header">
+                        <div>
+                            <p class="security-label">
+                                Private Activity
+                            </p>
+
+                            <h2>
+                                Recent Security Activity
+                            </h2>
+
+                            <small>
+                                Only your own activity is displayed.
+                            </small>
+                        </div>
+
+                        <span
+                            class="activity-shield"
+                            aria-hidden="true"
+                        >
+                            🛡️
+                        </span>
+                    </div>
+
+                    {% if recent_activity %}
+                        <div class="activity-list">
+                            {% for activity in recent_activity %}
+                                <article class="activity-item">
+                                    <div
+                                        class="
+                                            activity-status
+                                            activity-status-{{ activity['outcome']|lower }}
+                                        "
+                                        aria-hidden="true"
+                                    >
+                                        {% if activity["outcome"] == "SUCCESS" %}
+                                            ✓
+                                        {% elif activity["outcome"] == "FAILURE" %}
+                                            !
+                                        {% else %}
+                                            i
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="activity-content">
+                                        <strong>
+                                            {{
+                                                activity["event_type"]
+                                                |replace("_", " ")
+                                                |title
+                                            }}
+                                        </strong>
+
+                                        <p>
+                                            {{ activity["created_at"] }}
+                                        </p>
+
+                                        <span
+                                            class="
+                                                activity-outcome
+                                                activity-outcome-{{ activity['outcome']|lower }}
+                                            "
+                                        >
+                                            {{ activity["outcome"] }}
+                                        </span>
+                                    </div>
+                                </article>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-accounts-message">
+                            No security activity has been recorded yet.
+                        </div>
+                    {% endif %}
+                </section>
+            </aside>
+
+            <section
+                id="session-timeout-controller"
+                class="registration-card session-security-card"
+                data-timeout-seconds="{{ session_timeout_seconds }}"
+                data-remaining-seconds="{{ session_remaining_seconds }}"
+                data-current-mode="{{ session_timeout_mode }}"
+                data-set-mode-url="{{ url_for('set_session_timeout_mode') }}"
+                data-heartbeat-url="{{ url_for('session_heartbeat') }}"
+                data-login-url="{{ url_for('login') }}"
+                aria-labelledby="session-security-title"
+            >
+                <div class="compact-session-heading">
+                    <div>
+                        <p class="security-label">
+                            Session Protection
+                        </p>
+
+                        <h2 id="session-security-title">
+                            Automatic Session Timeout
+                        </h2>
+                    </div>
+
+                    <span
+                        class="session-security-icon"
+                        aria-hidden="true"
+                    >
+                        ⏱
+                    </span>
+                </div>
+
+                <div
+                    id="timeout-switch"
+                    class="
+                        timeout-switch
+                        {% if session_timeout_mode == 'demo' %}
+                            is-demo
+                        {% endif %}
+                    "
+                    role="group"
+                    aria-label="Session timeout mode"
+                >
+                    <span
+                        class="timeout-switch-slider"
+                        aria-hidden="true"
+                    ></span>
+
+                    <button
+                        type="button"
+                        class="timeout-switch-button"
+                        data-timeout-mode="standard"
+                        aria-pressed="{% if session_timeout_mode == 'standard' %}true{% else %}false{% endif %}"
+                    >
+                        <span class="timeout-button-icon">
+                            🛡
+                        </span>
+
+                        <span class="timeout-option-title">
+                            Standard
+                        </span>
+
+                        <span class="timeout-option-time">
+                            15 min
+                        </span>
+                    </button>
+
+                    <button
+                        type="button"
+                        class="timeout-switch-button"
+                        data-timeout-mode="demo"
+                        aria-pressed="{% if session_timeout_mode == 'demo' %}true{% else %}false{% endif %}"
+                    >
+                        <span class="timeout-button-icon">
+                            ⚡
+                        </span>
+
+                        <span class="timeout-option-title">
+                            Demo
+                        </span>
+
+                        <span class="timeout-option-time">
+                            5 sec
+                        </span>
+                    </button>
+                </div>
+
+                <div
+                    id="session-countdown-card"
+                    class="session-countdown-card compact-countdown-card"
+                >
+                    <strong
+                        id="session-countdown"
+                        class="session-countdown"
+                        aria-live="polite"
+                        aria-atomic="true"
+                    >
+                        {{ session_countdown_display }}
+                    </strong>
+                </div>
+            </section>
+
+            <section
+                id="lockout-mode-controller"
+                class="registration-card login-lockout-mode-card"
+                data-current-mode="{% if lockout_demo_mode %}demo{% else %}standard{% endif %}"
+                data-set-mode-url="{{ url_for('change_lockout_mode') }}"
+                aria-labelledby="login-lockout-mode-title"
+            >
+                <div class="compact-session-heading">
+                    <div>
+                        <p class="security-label">
+                            Login Protection
+                        </p>
+
+                        <h2 id="login-lockout-mode-title">
+                            Account Lockout Mode
+                        </h2>
+                    </div>
+
+                    <span
+                        class="lockout-security-icon"
+                        aria-hidden="true"
+                    >
+                        🔒
+                    </span>
+                </div>
+
+                <div
+                    id="lockout-switch"
+                    class="
+                        lockout-switch
+                        {% if lockout_demo_mode %}
+                            is-demo
+                        {% endif %}
+                    "
+                    role="group"
+                    aria-label="Account lockout mode"
+                >
+                    <span
+                        class="lockout-switch-slider"
+                        aria-hidden="true"
+                    ></span>
+
+                    <button
+                        type="button"
+                        class="lockout-switch-button"
+                        data-lockout-mode="standard"
+                        aria-pressed="{% if not lockout_demo_mode %}true{% else %}false{% endif %}"
+                    >
+                        <span class="lockout-button-icon">
+                            🛡
+                        </span>
+
+                        <span class="lockout-option-title">
+                            Standard
+                        </span>
+
+                        <span class="lockout-option-time">
+                            5 min
+                        </span>
+                    </button>
+
+                    <button
+                        type="button"
+                        class="lockout-switch-button"
+                        data-lockout-mode="demo"
+                        aria-pressed="{% if lockout_demo_mode %}true{% else %}false{% endif %}"
+                    >
+                        <span class="lockout-button-icon">
+                            ⚡
+                        </span>
+
+                        <span class="lockout-option-title">
+                            Demo
+                        </span>
+
+                        <span class="lockout-option-time">
+                            10 sec
+                        </span>
+                    </button>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <form
+        id="session-expire-form"
+        method="POST"
+        action="{{ url_for('session_expired') }}"
+        hidden
+    >
+        <input
+            type="hidden"
+            name="csrf_token"
+            value="{{ csrf_token() }}"
+        >
+    </form>
+</body>
+</html>

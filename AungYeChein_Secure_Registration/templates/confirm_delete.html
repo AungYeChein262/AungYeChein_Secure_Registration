@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Confirm Account Deletion</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+</head>
+
+<body>
+    <main class="registration-container">
+        <section class="registration-card">
+            <div class="deletion-warning-icon">
+                !
+            </div>
+
+            <p class="security-label danger-label">
+                Final Confirmation
+            </p>
+
+            <h1>Permanently Delete Account</h1>
+
+            <p class="intro-text">
+                Enter the six-digit deletion code sent to
+                <strong>{{ user["email"] }}</strong>.
+            </p>
+
+            <p class="deletion-expiry-note">
+                The code expires after five minutes and can only
+                be used once.
+            </p>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                    <div
+                        class="message-box {{ category }}-box"
+                        role="alert"
+                    >
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endwith %}
+
+            {% if errors %}
+                <div
+                    class="message-box error-box"
+                    role="alert"
+                >
+                    <strong>
+                        Account deletion was not completed:
+                    </strong>
+
+                    <ul>
+                        {% for error in errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <form method="POST">
+                <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="{{ csrf_token() }}"
+                >
+
+                <div class="form-group">
+                    <label for="verification_code">
+                        Six-digit deletion code
+                    </label>
+
+                    <input
+                        id="verification_code"
+                        name="verification_code"
+                        type="text"
+                        class="verification-input"
+                        minlength="6"
+                        maxlength="6"
+                        inputmode="numeric"
+                        pattern="[0-9]{6}"
+                        autocomplete="one-time-code"
+                        required
+                        autofocus
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmation_text">
+                        Type DELETE to confirm
+                    </label>
+
+                    <input
+                        id="confirmation_text"
+                        name="confirmation_text"
+                        type="text"
+                        maxlength="6"
+                        autocomplete="off"
+                        placeholder="DELETE"
+                        required
+                    >
+                </div>
+
+                <label class="deletion-confirmation-check">
+                    <input
+                        type="checkbox"
+                        name="deletion_confirmed"
+                        value="yes"
+                        required
+                    >
+
+                    <span>
+                        I understand that deleting my account is
+                        permanent and cannot be undone.
+                    </span>
+                </label>
+
+                <button
+                    type="submit"
+                    class="danger-button"
+                >
+                    Permanently Delete My Account
+                </button>
+            </form>
+
+            <form
+                method="POST"
+                action="{{ url_for('resend_delete_code') }}"
+                class="resend-form"
+            >
+                <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="{{ csrf_token() }}"
+                >
+
+                <button
+                    type="submit"
+                    class="secondary-button full-width-button"
+                >
+                    Send a New Code
+                </button>
+            </form>
+
+            <form
+                method="POST"
+                action="{{ url_for('cancel_account_deletion') }}"
+                class="resend-form"
+            >
+                <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="{{ csrf_token() }}"
+                >
+
+                <button
+                    type="submit"
+                    class="safe-cancel-button"
+                >
+                    Cancel Account Deletion
+                </button>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

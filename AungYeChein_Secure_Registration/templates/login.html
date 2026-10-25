@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Secure Login</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/security_features.css') }}"
+    >
+
+    <script
+        src="{{ url_for('static', filename='js/login_lockout.js') }}"
+        defer
+    ></script>
+</head>
+
+<body>
+    <main class="registration-container">
+        <section class="registration-card">
+            <div class="security-page-icon">
+                🔐
+            </div>
+
+            <p class="security-label">
+                Protected Authentication
+            </p>
+
+            <h1>Secure Login</h1>
+
+            <p class="intro-text">
+                Enter your username or email and password.
+                A six-digit email code is required after the
+                password is accepted.
+            </p>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                    <div
+                        class="message-box {{ category }}-box"
+                        role="alert"
+                    >
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endwith %}
+
+            {% if errors %}
+                <div
+                    class="message-box error-box"
+                    role="alert"
+                >
+                    <ul>
+                        {% for error in errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            {% if lockout_remaining_seconds %}
+                <div
+                    id="login-lockout-panel"
+                    class="login-lockout-panel"
+                    data-remaining-seconds="{{ lockout_remaining_seconds }}"
+                    data-login-url="{{ url_for('login') }}"
+                >
+                    <span class="login-lockout-label">
+                        Account protection active
+                    </span>
+
+                    <strong
+                        id="login-lockout-countdown"
+                        class="login-lockout-countdown"
+                    >
+                        --:--
+                    </strong>
+
+                    <p>
+                        Login will become available when the
+                        countdown reaches zero.
+                    </p>
+                </div>
+            {% endif %}
+
+            <form method="POST">
+                <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="{{ csrf_token() }}"
+                >
+
+                <div class="form-group">
+                    <label for="identity">
+                        Username or email
+                    </label>
+
+                    <input
+                        id="identity"
+                        name="identity"
+                        type="text"
+                        maxlength="254"
+                        autocomplete="username"
+                        value="{{ identity }}"
+                        required
+                        autofocus
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password">
+                        Password
+                    </label>
+
+                    <input
+                        id="password"
+                        name="password"
+                        type="password"
+                        maxlength="128"
+                        autocomplete="current-password"
+                        required
+                    >
+                </div>
+
+                <button
+                    type="submit"
+                    class="register-button"
+                >
+                    Continue Secure Login
+                </button>
+            </form>
+
+            <div class="login-support-links">
+                <a href="{{ url_for('forgot_password') }}">
+                    Forgot your password?
+                </a>
+
+                <a href="{{ url_for('register') }}">
+                    Create a secure account
+                </a>
+            </div>
+        </section>
+    </main>
+</body>
+</html>
